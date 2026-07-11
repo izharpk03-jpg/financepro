@@ -2,3 +2,4 @@ flet
 pandas
 openpyxl
 reportlab
+psycopg2-binary
