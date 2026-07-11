@@ -1,22 +1,17 @@
-import sqlite3
 import os
-
-
-DB_FOLDER = "database"
-DB_NAME = "finance.db"
-
-
-os.makedirs(DB_FOLDER, exist_ok=True)
-
-
-DB_PATH = os.path.join(DB_FOLDER, DB_NAME)
-
+import psycopg2
+from psycopg2.extras import RealDictCursor
 
 
 def get_connection():
 
-    return sqlite3.connect(DB_PATH)
+    database_url = os.environ.get("DATABASE_URL")
 
+    if database_url:
+        return psycopg2.connect(database_url)
+
+    else:
+        raise Exception("DATABASE_URL not found")
 
 
 def create_tables():
@@ -28,7 +23,7 @@ def create_tables():
     # Users Table
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS users(
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id SERIAL PRIMARY KEY,
         username TEXT UNIQUE,
         password TEXT
     )
@@ -38,7 +33,7 @@ def create_tables():
     # Income Table
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS income(
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id SERIAL PRIMARY KEY,
         date TEXT,
         amount REAL,
         source TEXT,
@@ -50,7 +45,7 @@ def create_tables():
     # Expense Table
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS expenses(
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id SERIAL PRIMARY KEY,
         date TEXT,
         category TEXT,
         amount REAL,
@@ -63,7 +58,7 @@ def create_tables():
     # Investment Table
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS investments(
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id SERIAL PRIMARY KEY,
         name TEXT,
         purchase_date TEXT,
         amount REAL,
@@ -71,10 +66,11 @@ def create_tables():
     )
     """)
 
+
     # Borrow Given Table
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS borrow_given(
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id SERIAL PRIMARY KEY,
         name TEXT,
         date TEXT,
         amount REAL,
@@ -84,35 +80,8 @@ def create_tables():
         notes TEXT
     )
     """)
-    try:
-        cursor.execute("ALTER TABLE borrow_given ADD COLUMN outstanding REAL")
-    except Exception:
-        pass
-    cursor.execute("UPDATE borrow_given SET outstanding=amount WHERE outstanding IS NULL")
-
-    # Borrow Taken Table
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS borrow_taken(
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT,
-        date TEXT,
-        amount REAL,
-        due_date TEXT,
-        payment_status TEXT,
-        notes TEXT
-    )
-    """)
-
-
-    # Create Default User
-
-    cursor.execute("""
-    INSERT OR IGNORE INTO users(username,password)
-    VALUES (?,?)
-    """,
-    ("admin","admin123")
-    )
 
 
     conn.commit()
+    cursor.close()
     conn.close()
