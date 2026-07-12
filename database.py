@@ -80,7 +80,19 @@ def create_tables():
         notes TEXT
     )
     """)
-
+# Borrow Taken Table
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS borrow_taken(
+    id SERIAL PRIMARY KEY,
+    name TEXT,
+    date TEXT,
+    amount REAL,
+    outstanding REAL,
+    due_date TEXT,
+    payment_status TEXT,
+    notes TEXT
+)
+""")
 
     conn.commit()
     cursor.close()
