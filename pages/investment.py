@@ -41,7 +41,7 @@ def investment_page(page):
                 """
                 INSERT INTO investments
                 (name, purchase_date, amount, current_value)
-                VALUES (%s,%s,%s,%s)
+                VALUES (?,?,?,?)
                 """,
                 (
                     name.value,

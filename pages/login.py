@@ -1,10 +1,10 @@
 import flet as ft
-import sqlite3
+from database import get_connection
 
 
 def check_login(username, password):
 
-    conn = sqlite3.connect("database/finance.db")
+    conn = get_connection()
     cursor = conn.cursor()
 
     cursor.execute(

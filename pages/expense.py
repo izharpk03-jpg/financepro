@@ -58,7 +58,7 @@ def expense_page(page):
                 """
                 INSERT INTO expenses
                 (date, category, amount, payment_method, notes)
-                VALUES (%s,%s,%s,%s)
+                VALUES (?,?,?,?,?)
                 """,
                 (
                     expense_date.value,

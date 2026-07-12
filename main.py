@@ -17,7 +17,7 @@ def main(page: ft.Page):
 
 ft.app(
     target=main,
-    view=ft.AppView.WEB_BROWSER,
+    view=ft.AppView.WEB_ONLY,
     host="0.0.0.0",
     port=int(os.environ.get("PORT", "10000")),
 )
