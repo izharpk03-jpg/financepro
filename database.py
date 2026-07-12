@@ -67,7 +67,7 @@ def create_tables():
     """)
 
 
-    # Borrow Given Table
+        # Borrow Given Table
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS borrow_given(
         id SERIAL PRIMARY KEY,
@@ -80,19 +80,22 @@ def create_tables():
         notes TEXT
     )
     """)
-# Borrow Taken Table
-cursor.execute("""
-CREATE TABLE IF NOT EXISTS borrow_taken(
-    id SERIAL PRIMARY KEY,
-    name TEXT,
-    date TEXT,
-    amount REAL,
-    outstanding REAL,
-    due_date TEXT,
-    payment_status TEXT,
-    notes TEXT
-)
-""")
+
+
+    # Borrow Taken Table
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS borrow_taken(
+        id SERIAL PRIMARY KEY,
+        name TEXT,
+        date TEXT,
+        amount REAL,
+        outstanding REAL,
+        due_date TEXT,
+        payment_status TEXT,
+        notes TEXT
+    )
+    """)
+
 
     conn.commit()
     cursor.close()
