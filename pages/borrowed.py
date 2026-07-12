@@ -46,7 +46,7 @@ def borrowed_page(page):
                 """
                 INSERT INTO borrowed
                 (name, date, amount, due_date, notes)
-                VALUES (?,?,?,?,?)
+                VALUES (%s,%s,%s,%s)
                 """,
                 (
                     name.value,
