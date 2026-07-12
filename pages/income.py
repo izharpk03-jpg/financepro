@@ -106,7 +106,7 @@ def income_page(page):
                 """
                 INSERT INTO income
                 (date, amount, source, notes)
-                VALUES (?,?,?,?)
+                VALUES (%s,%s,%s,%s)
                 """,
 
                 (
