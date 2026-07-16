@@ -7,7 +7,7 @@ DB_FOLDER = os.path.join(BASE_DIR, "database")
 DB_NAME = os.environ.get("DB_NAME", "finance.db")
 DATABASE_URL = os.environ.get("DATABASE_URL")
 DB_PATH = os.environ.get("DATABASE_PATH", os.path.join(DB_FOLDER, DB_NAME))
-USE_POSTGRES = bool(DATABASE_URL)
+USE_POSTGRES = os.environ.get("USE_POSTGRES", "").lower() in {"1", "true", "yes", "on"} and bool(DATABASE_URL)
 
 
 os.makedirs(DB_FOLDER, exist_ok=True)
@@ -21,6 +21,10 @@ class DBCursor:
     def execute(self, query, params=None):
         if USE_POSTGRES and params is not None:
             query = query.replace("?", "%s")
+        if USE_POSTGRES:
+            if params is None:
+                return self.cursor.execute(query, prepare=False)
+            return self.cursor.execute(query, params, prepare=False)
         if params is None:
             return self.cursor.execute(query)
         return self.cursor.execute(query, params)
@@ -28,6 +32,7 @@ class DBCursor:
     def executemany(self, query, seq_of_params):
         if USE_POSTGRES:
             query = query.replace("?", "%s")
+            return self.cursor.executemany(query, seq_of_params, prepare=False)
         return self.cursor.executemany(query, seq_of_params)
 
     def fetchone(self):
@@ -61,8 +66,16 @@ class DBConnection:
 def get_connection():
 
     if USE_POSTGRES:
-        import psycopg
-        return DBConnection(psycopg.connect(DATABASE_URL, sslmode="require"))
+        try:
+            import psycopg
+            conn = psycopg.connect(
+                DATABASE_URL,
+                sslmode="require",
+                prepare_threshold=0,
+            )
+            return DBConnection(conn)
+        except Exception:
+            pass
     return DBConnection(sqlite3.connect(DB_PATH))
 
 
