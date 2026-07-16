@@ -66,6 +66,30 @@ def get_connection():
     return DBConnection(sqlite3.connect(DB_PATH))
 
 
+def _column_exists(conn, table_name, column_name):
+    cursor = conn.cursor()
+    if USE_POSTGRES:
+        cursor.execute(
+            "SELECT column_name FROM information_schema.columns WHERE table_name = %s",
+            (table_name,),
+        )
+        rows = cursor.fetchall()
+        return any(row[0] == column_name for row in rows)
+
+    cursor.execute(f"PRAGMA table_info({table_name})")
+    rows = cursor.fetchall()
+    return any(row[1] == column_name for row in rows)
+
+
+def _add_column_if_missing(conn, table_name, column_name, definition):
+    if _column_exists(conn, table_name, column_name):
+        return
+    if USE_POSTGRES:
+        conn.cursor().execute(f"ALTER TABLE {table_name} ADD COLUMN IF NOT EXISTS {column_name} {definition}")
+    else:
+        conn.cursor().execute(f"ALTER TABLE {table_name} ADD COLUMN {column_name} {definition}")
+
+
 def create_tables():
 
     conn = get_connection()
@@ -86,6 +110,7 @@ def create_tables():
             date TEXT,
             amount REAL,
             source TEXT,
+            payment_method TEXT,
             notes TEXT
         )
         """)
@@ -107,7 +132,10 @@ def create_tables():
             name TEXT,
             purchase_date TEXT,
             amount REAL,
-            current_value REAL
+            current_value REAL,
+            investment_type TEXT,
+            payment_method TEXT,
+            notes TEXT
         )
         """)
 
@@ -120,7 +148,10 @@ def create_tables():
             outstanding REAL,
             due_date TEXT,
             payment_status TEXT,
-            notes TEXT
+            payment_method TEXT,
+            notes TEXT,
+            received_amount REAL,
+            collection_date TEXT
         )
         """)
 
@@ -130,21 +161,22 @@ def create_tables():
             name TEXT,
             date TEXT,
             amount REAL,
+            outstanding REAL,
             due_date TEXT,
             payment_status TEXT,
-            notes TEXT
+            payment_method TEXT,
+            notes TEXT,
+            repaid_amount REAL,
+            repayment_date TEXT
         )
         """)
-
-        cursor.execute("ALTER TABLE borrow_given ADD COLUMN IF NOT EXISTS outstanding REAL")
-        cursor.execute("UPDATE borrow_given SET outstanding=amount WHERE outstanding IS NULL")
 
         cursor.execute("""
         INSERT INTO users(username,password)
         VALUES (%s,%s)
         ON CONFLICT (username) DO NOTHING
         """,
-        ("admin","admin123")
+        ("admin", "admin123")
         )
 
     else:
@@ -162,6 +194,7 @@ def create_tables():
             date TEXT,
             amount REAL,
             source TEXT,
+            payment_method TEXT,
             notes TEXT
         )
         """)
@@ -183,7 +216,10 @@ def create_tables():
             name TEXT,
             purchase_date TEXT,
             amount REAL,
-            current_value REAL
+            current_value REAL,
+            investment_type TEXT,
+            payment_method TEXT,
+            notes TEXT
         )
         """)
 
@@ -196,7 +232,10 @@ def create_tables():
             outstanding REAL,
             due_date TEXT,
             payment_status TEXT,
-            notes TEXT
+            payment_method TEXT,
+            notes TEXT,
+            received_amount REAL,
+            collection_date TEXT
         )
         """)
 
@@ -206,24 +245,40 @@ def create_tables():
             name TEXT,
             date TEXT,
             amount REAL,
+            outstanding REAL,
             due_date TEXT,
             payment_status TEXT,
-            notes TEXT
+            payment_method TEXT,
+            notes TEXT,
+            repaid_amount REAL,
+            repayment_date TEXT
         )
         """)
-
-        try:
-            cursor.execute("ALTER TABLE borrow_given ADD COLUMN outstanding REAL")
-        except Exception:
-            pass
-        cursor.execute("UPDATE borrow_given SET outstanding=amount WHERE outstanding IS NULL")
 
         cursor.execute("""
         INSERT OR IGNORE INTO users(username,password)
         VALUES (?,?)
         """,
-        ("admin","admin123")
+        ("admin", "admin123")
         )
+
+    _add_column_if_missing(conn, "income", "payment_method", "TEXT")
+    _add_column_if_missing(conn, "investments", "investment_type", "TEXT")
+    _add_column_if_missing(conn, "investments", "payment_method", "TEXT")
+    _add_column_if_missing(conn, "investments", "notes", "TEXT")
+    _add_column_if_missing(conn, "borrow_given", "outstanding", "REAL")
+    _add_column_if_missing(conn, "borrow_given", "payment_method", "TEXT")
+    _add_column_if_missing(conn, "borrow_given", "received_amount", "REAL")
+    _add_column_if_missing(conn, "borrow_given", "collection_date", "TEXT")
+    _add_column_if_missing(conn, "borrow_taken", "outstanding", "REAL")
+    _add_column_if_missing(conn, "borrow_taken", "payment_method", "TEXT")
+    _add_column_if_missing(conn, "borrow_taken", "repaid_amount", "REAL")
+    _add_column_if_missing(conn, "borrow_taken", "repayment_date", "TEXT")
+
+    cursor.execute("UPDATE borrow_given SET outstanding=amount WHERE outstanding IS NULL")
+    cursor.execute("UPDATE borrow_taken SET outstanding=amount WHERE outstanding IS NULL")
+    cursor.execute("UPDATE borrow_given SET received_amount=0 WHERE received_amount IS NULL")
+    cursor.execute("UPDATE borrow_taken SET repaid_amount=0 WHERE repaid_amount IS NULL")
 
     conn.commit()
     conn.close()
