@@ -113,6 +113,7 @@ def create_tables():
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
+        _add_column_if_missing(conn, "users", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS settings (
                 key TEXT PRIMARY KEY,
@@ -228,6 +229,7 @@ def create_tables():
                 created_at TEXT
             )
         """)
+        _add_column_if_missing(conn, "users", "created_at", "TEXT")
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS settings(
                 key TEXT PRIMARY KEY,
