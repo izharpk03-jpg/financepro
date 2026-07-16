@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: financepro
+    env: python
+    region: oregon
+    plan: free
+    branch: main
+    buildCommand: pip install -r requirements.txt
+    startCommand: python run.py
+    envVars:
+      - key: PORT
+        sync: true
+      - key: DATABASE_URL
+        sync: true
+      - key: DATABASE_PATH
+        sync: true
